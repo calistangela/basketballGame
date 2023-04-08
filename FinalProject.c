@@ -450,12 +450,16 @@ int main(void){
         pixel_buffer_start = *pixel_ctrl_ptr;
 
         //clear_screen();
-
+	
+	//Coordinate calculation
         if(ball_in_the_air){
 	    ball_coord[1] = ball_coord[1] - velocity_x * time_step;
             ball_coord[2] = ball_coord[2] - velocity_y * time_step + 0.5 * grav_accerl * (time_step) * (time_step);
             velocity_y = velocity_y - grav_accerl * time_step;
         }
+	
+	//Boundary Checking
+	
 	int arrayIndex = 0;
     	int arrayIndex2 = 1;
 
