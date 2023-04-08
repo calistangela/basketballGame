@@ -304,11 +304,11 @@ volatile int shift_dir = 2;
 
 volatile bool ball_in_the_air = false;
 double ball_coord[2] = {0, 0};
-int beaver_coord[2] = {319 - 65 + 1, 209 - 55};
+int beaver_coord[2] = {319 - 66 + 1, 209 - 56};
 int fps = 60;
 int score;
-int beaverRightMost = 255;
-int beaverLeftMost = 133;
+int beaverRightMost = 254;
+int beaverLeftMost = 132;
 double time_step = 1/60;
 double grav_accerl= 9.80665;
 double velocity_x = 0;
@@ -407,8 +407,8 @@ void pushbutton_ISR(void){
     }
     else{
         key_pressed = 3; //reset
-        beaver_coord[0] = 319 - 65 + 1;
-        beaver_coord[1] = 209 - 55;
+        beaver_coord[0] = 319 - 66 + 1;
+        beaver_coord[1] = 209 - 56;
         score = 0;
     }
 
