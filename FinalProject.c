@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 const uint8_t BALL [] = {
   0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff, 0xd8, 0xff,
@@ -392,6 +393,8 @@ volatile int shift_dir = 2;
 volatile bool ball_in_the_air = false;
 volatile int ball_coord[2] = {244, 162};
 volatile int beaver_coord[2] = {319 - 66 + 1, 209 - 56};
+int prev_ball_coord_1[2] = {244,162};
+int prev_ball_coord_2[2] = {244,162};
 int fps = 60;
 int score;
 const int beaver_width = 66;
@@ -400,9 +403,9 @@ const int ball_radius = 21;
 int beaverRightMost = 254;
 int beaverLeftMost = 132;
 int time_step = 1;
-int grav_accerl= 2;
-volatile int velocity_x = 10;
-volatile int velocity_y = 20;
+int grav_accerl= 1;
+volatile int velocity_x = 7;
+volatile int velocity_y = 16;
 
 // code not shown for clear_screen() and draw_line() subroutines
 void plot_pixel(int x, int y, short int line_color){
@@ -527,10 +530,20 @@ void clear_beaver(){
 }
 
 void clear_ball(){
-    for(int j = (int)ball_coord[1]; j < (int)ball_coord[1] + ball_radius; ++j){
-        for(int i = (int)ball_coord[0]; i < (int)ball_coord[0] + ball_radius; ++i){
-            short int background_clr = (BACKGROUND[2 * i + 1 + j * 640] << 8) + (BACKGROUND[2 * i + j * 640]);
-            plot_pixel (i , j, background_clr);
+    if(pixel_buffer_start == (int)0xC8000000){
+        for(int j = (int)prev_ball_coord_1[1]; j < (int)prev_ball_coord_1[1] + ball_radius; ++j){
+            for(int i = (int)prev_ball_coord_1[0]; i < (int)prev_ball_coord_1[0] + ball_radius; ++i){
+                short int background_clr = (BACKGROUND[2 * i + 1 + j * 640] << 8) + (BACKGROUND[2 * i + j * 640]);
+                plot_pixel (i , j, background_clr);
+            }
+        }
+    }
+    else{
+        for(int j = (int)prev_ball_coord_2[1]; j < (int)prev_ball_coord_2[1] + ball_radius; ++j){
+            for(int i = (int)prev_ball_coord_2[0]; i < (int)prev_ball_coord_2[0] + ball_radius; ++i){
+                short int background_clr = (BACKGROUND[2 * i + 1 + j * 640] << 8) + (BACKGROUND[2 * i + j * 640]);
+                plot_pixel (i , j, background_clr);
+            }
         }
     }
 }
@@ -591,10 +604,43 @@ int main(void){
 
     enable_A9_interrupts();
 
-    pixel_buffer_start = *pixel_ctrl_ptr;
+    *(pixel_ctrl_ptr + 1) = 0xC8000000;     //The starting address of the FPGA on-chip memory
+    wait_for_vsync();                       //Swap the buffers
+    pixel_buffer_start = *pixel_ctrl_ptr;   //Current address of the buffer is 0xC8000000
 
+    //Draw the background
     int arrayIndex = 0;
     int arrayIndex2 = 1;
+
+    for (int j = 0; j < 240; j++){
+        for (int i = 0; i < 320; i++){
+            short int background_clr = (BACKGROUND[arrayIndex2] << 8) + (BACKGROUND[arrayIndex]);
+            plot_pixel (i , j, background_clr);
+            if((beaver_coord[0] <= i && i <= beaver_coord[0] + beaver_width - 1) && (beaver_coord[1] <= j && j <= beaver_coord[1] + beaver_height - 1)){
+                short int beaver_clr = (BEAVER[2 * (i - beaver_coord[0]) + 1 + (132 * (j - beaver_coord[1]))] << 8) + (BEAVER[2 * (i - beaver_coord[0]) + (132 * (j - beaver_coord[1]))]);
+                if(beaver_clr != (short int)0xFFD8){
+                    plot_pixel(i, j, beaver_clr);
+                }
+            }
+            if( ((int)ball_coord[0] <= i && i <= (int)ball_coord[0] + ball_radius - 1) && ((int)ball_coord[1] <= j && j <= (int)ball_coord[1] + ball_radius - 1) ){
+                short int ball_clr = (BALL[2 * (i - (int)ball_coord[0]) + 1 + (42 * (j - (int)ball_coord[1]))] << 8) + (BALL[2 * (i - (int)ball_coord[0]) + (42 * (j - (int)ball_coord[1]))]);
+                if(ball_clr != (short int)0xFFD8){
+                    plot_pixel (i, j, ball_clr);
+                }
+            }
+            if (arrayIndex2 != 76800*2-1){
+                arrayIndex+=2;
+                arrayIndex2+=2;
+            }
+        }
+    }
+
+    *(pixel_ctrl_ptr + 1) = 0xC0000000;     //The starting address of the SDRAM
+    pixel_buffer_start = *(pixel_ctrl_ptr + 1); //Set the SDRAM @ as the buffer we write
+
+    //Draw the background
+    arrayIndex = 0;
+    arrayIndex2 = 1;
 
     for (int j = 0; j < 240; j++){
         for (int i = 0; i < 320; i++){
@@ -627,19 +673,30 @@ int main(void){
         //beaver_coord[0] -= 10;
         //ball_coord[0] -= 10.0;
 
-	//Coordinate calculation
+        //Saving the previous coordinates
+        if(pixel_buffer_start == (int)0xC0000000){
+            prev_ball_coord_1[0] = ball_coord[0];
+            prev_ball_coord_1[1] = ball_coord[1];
+        }
+        else{
+            prev_ball_coord_2[0] = ball_coord[0];
+            prev_ball_coord_2[1] = ball_coord[1];
+        }
+
+        //Coordinate calculation
         if(true){
             ball_coord[0] = ball_coord[0] - velocity_x * time_step;
             ball_coord[1] = ball_coord[1] - velocity_y * time_step + 0.5 * grav_accerl * (time_step) * (time_step);
             velocity_y = velocity_y - grav_accerl * time_step;
         }
 
-	//Boundary Checking
+        //Boundary Checking
 
         draw_beaver();
         draw_ball();
 
         wait_for_vsync();
+        pixel_buffer_start = *(pixel_ctrl_ptr + 1);
     }
 
 }
