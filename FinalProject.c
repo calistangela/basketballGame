@@ -307,6 +307,8 @@ double ball_coord[2] = {0, 0};
 int beaver_coord[2] = {319 - 65 + 1, 209 - 55};
 int fps = 60;
 int score;
+int beaverRightMost = 255;
+int beaverLeftMost = 133;
 double time_step = 1/60;
 double grav_accerl= 9.80665;
 double velocity_x = 0;
@@ -376,6 +378,12 @@ void pushbutton_ISR(void){
 
         //update the coordinate 
         beaver_coord[0] = beaverCoordX; 
+	
+	//check if beaver hit the right boundary, don't increment
+	if (beaverCoordX == beaverRightMost){
+		beaverCoordX = beaverRightMost;
+		beaver_coord[0] = beaverCoordx;
+	}
     }
     else if(press & 0x2){
         key_pressed = 1; //shoot
@@ -390,6 +398,12 @@ void pushbutton_ISR(void){
 
         //update the coordinate
         beaver_coord[0] = beaverCoordX; 
+	
+	//check if beaver hit the left boundary, don't decrement;
+	if (beaverCoordX == beaverLeftMost){
+		beaverCoordX = beaverLeftMost;
+		beaver_coord[0] = beaverCoordx;
+	}
     }
     else{
         key_pressed = 3; //reset
@@ -436,16 +450,10 @@ int main(void){
         pixel_buffer_start = *pixel_ctrl_ptr;
 
         //clear_screen();
-	
-	//Coordinate calculation
+
         if(ball_in_the_air){
-	    ball_coord[1] = ball_coord[1] - velocity_x * time_step;
-            ball_coord[2] = ball_coord[2] - velocity_y * time_step + 0.5 * grav_accerl * (time_step) * (time_step);
-            velocity_y = velocity_y - grav_accerl * time_step;
+
         }
-	
-	//Boundary checking
-	
 	int arrayIndex = 0;
     	int arrayIndex2 = 1;
 
