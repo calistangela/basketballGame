@@ -303,10 +303,11 @@ volatile int pattern = 0x0000000F;
 volatile int shift_dir = 2;
 
 volatile bool ball_in_the_air = false;
-int ball_coord[2] = {0, 0};
+double ball_coord[2] = {0, 0};
 int beaver_coord[2] = {319 - 65 + 1, 209 - 55};
 int fps = 60;
 int score;
+double time_step = 1/60;
 double grav_accerl= 9.80665;
 double velocity_x = 0;
 double velocity_y = 0;
