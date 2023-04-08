@@ -306,6 +306,7 @@ volatile bool ball_in_the_air = false;
 int ball_coord[2] = {0, 0};
 int beaver_coord[2] = {319 - 65 + 1, 209 - 55};
 int fps = 60;
+int score;
 double grav_accerl= 9.80665;
 double velocity_x = 0;
 double velocity_y = 0;
@@ -359,21 +360,41 @@ void config_GIC(void){
 void pushbutton_ISR(void){
     volatile int* KEY_ptr = (int *)0xFF200050;
     int press;
+    int beaverCoordX;
+
 
     press = *(KEY_ptr + 3);
     *(KEY_ptr + 3) = press;
 
     if(press & 0x1){
-        key_pressed = 0;
+        key_pressed = 0; //move beaver to right
+        beaverCoordX = beaver_coord[0];
+        
+        //increment with each key 0 pressed
+        beaverCoordX +=10;
+
+        //update the coordinate 
+        beaver_coord[0] = beaverCoordX; 
     }
     else if(press & 0x2){
-        key_pressed = 1;
+        key_pressed = 1; //shoot
+
     }
     else if(press & 0x4){
-        key_pressed = 2;
+        key_pressed = 2; //move beaver to left
+        beaverCoordX = beaver_coord[0];
+
+        //decrement with each key 0 pressed
+        beaverCoordX -= 10;
+
+        //update the coordinate
+        beaver_coord[0] = beaverCoordX; 
     }
     else{
-        key_pressed = 3;
+        key_pressed = 3; //reset
+        beaver_coord[0] = 319 - 65 + 1;
+        beaver_coord[1] = 209 - 55;
+        score = 0;
     }
 
     return;
@@ -394,6 +415,7 @@ void enable_A9_interrupts(void){
 int main(void){
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
     /* Read location of the pixel buffer from the pixel buffer controller */
+    volatile int * HEX3_HEX0_DISPLAY = (int *) 0xFF200020; 
     volatile int * HPS_GPIO1_ptr = (int *)0xFF709000;
     volatile int * LEDR_ptr = (int *)0xFF200000;
     volatile int * slider_switch_ptr = (int *)0xFF200040;
