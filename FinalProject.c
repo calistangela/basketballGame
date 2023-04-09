@@ -590,19 +590,23 @@ void clear_beaver(){
 
 void clear_ball(){
 
-    if( (pixel_buffer_start == (int)0xC8000000) && (prev_ball_coord_1[1] >= 0) ){
+    if( (pixel_buffer_start == (int)0xC8000000) ){
         for(int j = (int)prev_ball_coord_1[1]; j < (int)prev_ball_coord_1[1] + ball_radius; ++j){
             for(int i = (int)prev_ball_coord_1[0]; i < (int)prev_ball_coord_1[0] + ball_radius; ++i){
                 short int background_clr = (BACKGROUND[2 * i + 1 + j * 640] << 8) + (BACKGROUND[2 * i + j * 640]);
-                plot_pixel (i , j, background_clr);
+                if(j >= 0){
+                    plot_pixel (i , j, background_clr);
+                }
             }
         }
     }
-    else if(prev_ball_coord_2[1] >= 0){
+    else{
         for(int j = (int)prev_ball_coord_2[1]; j < (int)prev_ball_coord_2[1] + ball_radius; ++j){
             for(int i = (int)prev_ball_coord_2[0]; i < (int)prev_ball_coord_2[0] + ball_radius; ++i){
                 short int background_clr = (BACKGROUND[2 * i + 1 + j * 640] << 8) + (BACKGROUND[2 * i + j * 640]);
-                plot_pixel (i , j, background_clr);
+                if(j >= 0){
+                    plot_pixel (i , j, background_clr);
+                }
             }
         }
     }
@@ -640,7 +644,7 @@ void draw_ball(){
     for(int j = 0; j < ball_radius; ++j){
         for(int i = 0; i < ball_radius; ++i){
             short int ball_clr = (BALL[2 * i + 1 + 42 * j] << 8) + (BALL[2 * i + 42 * j]);
-            if(ball_clr != (short int)0xFFD8){
+            if(ball_clr != (short int)0xFFD8 && j + ball_coord[1] >= 0){
                 plot_pixel(i + ball_coord[0], j + ball_coord[1], ball_clr);
             }
         }
@@ -766,7 +770,7 @@ int main(void){
 
         //Checking if the ball goes in
         if( 67 <= ball_coord[0] && ball_coord[0] <= 76 && 49 <= ball_coord[1] && ball_coord[1] <= 58){
-            ball_coord[0] = 77;
+            ball_coord[0] = 78;
             velocity_x = 0;
         }
         if( 77 <= ball_coord[0] && ball_coord[0] <= 95 && 38 <= ball_coord[1] && ball_coord[1] <= 58){
@@ -818,9 +822,8 @@ int main(void){
 
         draw_beaver();
 
-        if(!out_of_bounds){
-            draw_ball();
-        }
+        draw_ball();
+
         draw_basket();
 
         int thousands = score / 1000;
