@@ -658,10 +658,6 @@ void draw_basket(){
     }
 }
 
-void RICKROLL(){
-    
-}
-
 int main(void){
     volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
     /* Read location of the pixel buffer from the pixel buffer controller */
@@ -835,10 +831,7 @@ int main(void){
         volatile int score_bit = (NUMBERS[thousands] << 24) + (NUMBERS[hundreds] << 16) + (NUMBERS[tenz] << 8) + (NUMBERS[ones]);
 
         *(HEX3_HEX0_DISPLAY) = score_bit;
-        
-        if(score = 69){
-            RICKROLL();
-        }
+
 
         wait_for_vsync();
         pixel_buffer_start = *(pixel_ctrl_ptr + 1);
